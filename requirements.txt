@@ -13,3 +13,4 @@ pytz==2023.3
 daphne==4.0.0
 channels==4.0.0
 channels-redis==4.1.0
+djangorestframework-simplejwt==5.2.2

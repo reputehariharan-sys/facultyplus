@@ -5,6 +5,7 @@ Run with: python manage.py auto_close_expired_jobs
 from django.core.management.base import BaseCommand
 from django.utils import timezone
 from admin_panel.models import Job, ActivityLog
+from django.contrib.contenttypes.models import ContentType
 import logging
 
 logger = logging.getLogger('admin_panel')
@@ -34,7 +35,7 @@ class Command(BaseCommand):
             ActivityLog.objects.create(
                 user=None,  # System action
                 action='update',
-                content_type_id=38,  # Job content type
+                content_type=ContentType.objects.get_for_model(Job),
                 object_id=job.id,
                 description=f'Auto-closed job due to deadline: {job.job_title}',
                 ip_address='0.0.0.0',  # System action

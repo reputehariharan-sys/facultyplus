@@ -11,7 +11,63 @@ from admin_panel.models import User, ActivityLog, Applicant
 from admin_panel.serializers import UserDetailSerializer, UserProfileSerializer, ChangePasswordSerializer
 import logging
 
+# JWT imports
+from rest_framework_simplejwt.views import TokenObtainPairView
+from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
+
 logger = logging.getLogger(__name__)
+
+def get_client_ip(request):
+    """Get client IP address"""
+    x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
+    if x_forwarded_for:
+        ip = x_forwarded_for.split(',')[0]
+    else:
+        ip = request.META.get('REMOTE_ADDR')
+    return ip
+
+
+class CustomObtainPairView(TokenObtainPairView):
+    """Custom JWT obtain pair that returns access & refresh tokens plus user info."""
+    permission_classes = [AllowAny]
+
+    def post(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        try:
+            serializer.is_valid(raise_exception=True)
+        except Exception:
+            return Response({'error': 'Invalid credentials'}, status=status.HTTP_401_UNAUTHORIZED)
+
+        # serializer.user is set by TokenObtainPairSerializer
+        user = getattr(serializer, 'user', None)
+        if user is None:
+            return Response({'error': 'Invalid credentials'}, status=status.HTTP_401_UNAUTHORIZED)
+        if user.status == 'inactive':
+            return Response({'error': 'User account is inactive'}, status=status.HTTP_401_UNAUTHORIZED)
+
+        # Log the login action
+        ip_address = get_client_ip(request)
+        user.last_login_ip = ip_address
+        user.last_action = 'login'
+        user.last_action_time = timezone.now()
+        user.save()
+
+        ActivityLog.objects.create(
+            user=user,
+            action='login',
+            description=f'{user.username} logged in from {ip_address}',
+            ip_address=ip_address,
+            user_agent=request.META.get('HTTP_USER_AGENT', '')
+        )
+
+        data = serializer.validated_data
+        return Response({
+            'access': data.get('access'),
+            'refresh': data.get('refresh'),
+            'user': UserDetailSerializer(user).data,
+            'message': f'Welcome {user.get_full_name() or user.username}!'
+        })
+
 
 
 class CustomTokenAuth(ObtainAuthToken):
@@ -42,8 +98,8 @@ class CustomTokenAuth(ObtainAuthToken):
         token, created = Token.objects.get_or_create(user=user)
         
         # Log the login action
-        ip_address = self.get_client_ip(request)
-        user.last_login_ip = ip_address
+        # ip_address = get_client_ip(request)
+        # user.last_login_ip = ip_address
         user.last_action = 'login'
         user.last_action_time = timezone.now()
         user.save()
@@ -51,8 +107,8 @@ class CustomTokenAuth(ObtainAuthToken):
         ActivityLog.objects.create(
             user=user,
             action='login',
-            description=f'{user.username} logged in from {ip_address}',
-            ip_address=ip_address,
+            # description=f'{user.username} logged in from {ip_address}',
+            # ip_address=ip_address,
             user_agent=request.META.get('HTTP_USER_AGENT', '')
         )
         
@@ -61,16 +117,6 @@ class CustomTokenAuth(ObtainAuthToken):
             'user': UserDetailSerializer(user).data,
             'message': f'Welcome {user.get_full_name() or user.username}!'
         })
-    
-    @staticmethod
-    def get_client_ip(request):
-        """Get client IP address"""
-        x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
-        if x_forwarded_for:
-            ip = x_forwarded_for.split(',')[0]
-        else:
-            ip = request.META.get('REMOTE_ADDR')
-        return ip
 
 
 @api_view(['POST'])

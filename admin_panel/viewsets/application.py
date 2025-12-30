@@ -8,6 +8,7 @@ from rest_framework.permissions import IsAuthenticated, IsAuthenticatedOrReadOnl
 from django_filters.rest_framework import DjangoFilterBackend
 from django.utils import timezone
 from admin_panel.models import Application, ActivityLog
+from django.contrib.contenttypes.models import ContentType
 from admin_panel.serializers import (
     ApplicationListSerializer, ApplicationDetailSerializer, ApplicationCreateSerializer,
     ApplicationStatusUpdateSerializer
@@ -80,7 +81,7 @@ class ApplicationViewSet(viewsets.ModelViewSet):
         ActivityLog.objects.create(
             user=self.request.user,
             action='apply',
-            content_type_id=39,  # Application content type
+            content_type=ContentType.objects.get_for_model(Application),
             object_id=application.id,
             description=f'Applied for job: {application.job.job_title}',
             ip_address=self.get_client_ip(),
@@ -116,7 +117,7 @@ class ApplicationViewSet(viewsets.ModelViewSet):
             ActivityLog.objects.create(
                 user=request.user,
                 action='status_change',
-                content_type_id=39,  # Application content type
+                content_type=ContentType.objects.get_for_model(Application),
                 object_id=application.id,
                 description=f'Changed application status to {new_status}',
                 ip_address=self.get_client_ip(),
@@ -138,9 +139,9 @@ class ApplicationViewSet(viewsets.ModelViewSet):
         ActivityLog.objects.create(
             user=request.user,
             action='status_change',
-            content_type_id=39,
+            content_type=ContentType.objects.get_for_model(Application),
             object_id=application.id,
-            details='Marked application as under review',
+            description='Marked application as under review',
             ip_address=self.get_client_ip(),
             user_agent=request.META.get('HTTP_USER_AGENT', '')
         )
@@ -159,9 +160,9 @@ class ApplicationViewSet(viewsets.ModelViewSet):
         ActivityLog.objects.create(
             user=request.user,
             action='status_change',
-            content_type_id=39,
+            content_type=ContentType.objects.get_for_model(Application),
             object_id=application.id,
-            details='Moved application to interview stage',
+            description='Moved application to interview stage',
             ip_address=self.get_client_ip(),
             user_agent=request.META.get('HTTP_USER_AGENT', '')
         )
@@ -180,9 +181,9 @@ class ApplicationViewSet(viewsets.ModelViewSet):
         ActivityLog.objects.create(
             user=request.user,
             action='status_change',
-            content_type_id=39,
+            content_type=ContentType.objects.get_for_model(Application),
             object_id=application.id,
-            details='Marked application as shortlisted',
+            description='Marked application as shortlisted',
             ip_address=self.get_client_ip(),
             user_agent=request.META.get('HTTP_USER_AGENT', '')
         )
@@ -208,9 +209,9 @@ class ApplicationViewSet(viewsets.ModelViewSet):
         ActivityLog.objects.create(
             user=request.user,
             action='status_change',
-            content_type_id=39,
+            content_type=ContentType.objects.get_for_model(Application),
             object_id=application.id,
-            details='Marked application as selected',
+            description='Marked application as selected',
             ip_address=self.get_client_ip(),
             user_agent=request.META.get('HTTP_USER_AGENT', '')
         )
@@ -234,9 +235,9 @@ class ApplicationViewSet(viewsets.ModelViewSet):
         ActivityLog.objects.create(
             user=request.user,
             action='status_change',
-            content_type_id=39,
+            content_type=ContentType.objects.get_for_model(Application),
             object_id=application.id,
-            details=f'Marked application as rejected. Remarks: {remarks}',
+            description=f'Marked application as rejected. Remarks: {remarks}',
             ip_address=self.get_client_ip(),
             user_agent=request.META.get('HTTP_USER_AGENT', '')
         )

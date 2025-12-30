@@ -28,18 +28,24 @@ router.register(r'activity-logs', ActivityLogViewSet, basename='activity-log')
 # router.register(r'experiences', ExperienceViewSet, basename='experience')
 
 # Authentication URLs
+from rest_framework_simplejwt.views import TokenRefreshView
+
 auth_patterns = [
-    path('login/', auth_views.CustomTokenAuth.as_view(), name='login'),
+    # path('login/', auth_views.CustomTokenAuth.as_view(), name='login'),
     path('logout/', auth_views.logout_view, name='logout'),
     path('profile/', auth_views.user_profile, name='profile'),
     path('change-password/', auth_views.change_password, name='change-password'),
     path('register/', auth_views.register_applicant, name='register-applicant'),
+
+    # JWT endpoints
+    path('login/', auth_views.CustomObtainPairView.as_view(), name='token_obtain_pair'),
+    path('jwt/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
 ]
 
 # OpenAPI/Swagger URLs
 swagger_patterns = [
     path('schema/', SpectacularAPIView.as_view(), name='schema'),
-    path('schema/swagger-ui/', SpectacularSwaggerView.as_view(url_name='schema'), name='swagger-ui'),
+    path('', SpectacularSwaggerView.as_view(url_name='schema'), name='swagger-ui'),
     path('schema/redoc/', SpectacularRedocView.as_view(url_name='schema'), name='redoc'),
 ]
 
@@ -47,7 +53,7 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/auth/', include(auth_patterns)),
     path('api/', include(router.urls)),
-    path('api/docs/', include(swagger_patterns)),
+    path('', include(swagger_patterns)),
 ]
 
 # Serve media files in development

@@ -7,6 +7,7 @@ from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated, IsAuthenticatedOrReadOnly
 from django_filters.rest_framework import DjangoFilterBackend
 from admin_panel.models import Job, ActivityLog
+from django.contrib.contenttypes.models import ContentType
 from admin_panel.serializers import (
     JobListSerializer, JobDetailSerializer, JobCreateUpdateSerializer,
     JobApprovalSerializer, JobSelectionSerializer, ApplicationListSerializer
@@ -101,7 +102,7 @@ class JobViewSet(viewsets.ModelViewSet):
         ActivityLog.objects.create(
             user=self.request.user,
             action='create',
-            content_type_id=38,  # Job content type
+            content_type=ContentType.objects.get_for_model(Job),
             object_id=job.id,
             description=f'Created job: {job.job_title}',
             ip_address=self.get_client_ip(),
@@ -114,7 +115,7 @@ class JobViewSet(viewsets.ModelViewSet):
         ActivityLog.objects.create(
             user=self.request.user,
             action='update',
-            content_type_id=38,  # Job content type
+            content_type=ContentType.objects.get_for_model(Job),
             object_id=job.id,
             description=f'Updated job: {job.job_title}',
             ip_address=self.get_client_ip(),
@@ -149,7 +150,7 @@ class JobViewSet(viewsets.ModelViewSet):
         ActivityLog.objects.create(
             user=request.user,
             action='approve',
-            content_type_id=38,  # Job content type
+            content_type=ContentType.objects.get_for_model(Job),
             object_id=job.id,
             description=f'Approved and published job: {job.job_title}',
             ip_address=self.get_client_ip(),
@@ -179,9 +180,9 @@ class JobViewSet(viewsets.ModelViewSet):
         ActivityLog.objects.create(
             user=request.user,
             action='update',
-            content_type_id=38,  # Job content type
+            content_type=ContentType.objects.get_for_model(Job),
             object_id=job.id,
-            details=f'Marked applicant as selected for job: {job.job_title}',
+            description=f'Marked applicant as selected for job: {job.job_title}',
             ip_address=self.get_client_ip(),
             user_agent=request.META.get('HTTP_USER_AGENT', '')
         )

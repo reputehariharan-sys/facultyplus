@@ -7,6 +7,7 @@ from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from django_filters.rest_framework import DjangoFilterBackend
 from admin_panel.models import User, ActivityLog
+from django.contrib.contenttypes.models import ContentType
 from admin_panel.serializers import (
     UserListSerializer, UserDetailSerializer, UserCreateUpdateSerializer,
     UserProfileSerializer
@@ -71,7 +72,7 @@ class UserViewSet(viewsets.ModelViewSet):
         ActivityLog.objects.create(
             user=user,
             action='create',
-            content_type_id=40,  # User content type
+            content_type=ContentType.objects.get_for_model(User),
             object_id=user.id,
             description=f'User account created: {user.username}',
             ip_address=self.get_client_ip(),
@@ -130,7 +131,7 @@ class UserViewSet(viewsets.ModelViewSet):
         ActivityLog.objects.create(
             user=request.user,
             action='update',
-            content_type_id=40,
+            content_type=ContentType.objects.get_for_model(User),
             object_id=user.id,
             description=f'Changed user status to {new_status}',
             ip_address=self.get_client_ip(),
