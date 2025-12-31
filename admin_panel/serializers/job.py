@@ -78,7 +78,7 @@ class JobCreateUpdateSerializer(serializers.ModelSerializer):
         fields = [
             'job_title', 'job_description', 'college', 'department',
             'job_type', 'experience_required', 'qualification',
-            'salary_range', 'last_date', 'priority'
+            'salary_range', 'last_date', 'priority',"institution"
         ]
 
 

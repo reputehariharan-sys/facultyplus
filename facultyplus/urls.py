@@ -35,7 +35,7 @@ auth_patterns = [
     path('logout/', auth_views.logout_view, name='logout'),
     path('profile/', auth_views.user_profile, name='profile'),
     path('change-password/', auth_views.change_password, name='change-password'),
-    path('register/', auth_views.register_applicant, name='register-applicant'),
+    # path('register/', auth_views.register_applicant, name='register-applicant'),
 
     # JWT endpoints
     path('login/', auth_views.CustomObtainPairView.as_view(), name='token_obtain_pair'),

@@ -52,8 +52,8 @@ class JobViewSet(viewsets.ModelViewSet):
             # Anyone can view published jobs, auth users can view their jobs
             permission_classes = [IsAuthenticatedOrReadOnly]
         elif self.action in ['create']:
-            # Only HOD can create jobs
-            permission_classes = [IsAuthenticated, IsHOD]
+            # Anyone can create jobs
+            permission_classes = [IsAuthenticated]
         elif self.action in ['update', 'partial_update', 'destroy']:
             # Only job creator or admin can edit/delete
             permission_classes = [IsAuthenticated]
@@ -97,7 +97,26 @@ class JobViewSet(viewsets.ModelViewSet):
     
     def perform_create(self, serializer):
         """Create a job with HOD as creator."""
-        job = serializer.save(created_by=self.request.user, job_status='draft')
+        institution = self.request.user.institution
+        
+        if not institution:
+            from rest_framework.exceptions import ValidationError
+            from admin_panel.models import Institution
+            
+            institution_id = self.request.data.get('institution')
+            if not institution_id:
+                raise ValidationError({'institution': 'User is not associated with an institution and no institution provided.'})
+            
+            try:
+                institution = Institution.objects.get(id=institution_id)
+            except Institution.DoesNotExist:
+                raise ValidationError({'institution': 'Invalid institution ID.'})
+
+        job = serializer.save(
+            created_by=self.request.user,
+            job_status='draft',
+            institution=institution
+        )
         # Log activity
         ActivityLog.objects.create(
             user=self.request.user,
